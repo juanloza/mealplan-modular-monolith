@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  Deliberately short ruleset. Neither sun_checks nor google_checks is used: the
+  first is noisy to the point of being unusable, and the second imposes a
+  formatting style that only creates friction without an auto-formatter.
+
+  Every violation is an error, and the Maven plugin fails on warning severity
+  and above: a rule that does not break the build is not a rule.
+-->
+<module name="Checker">
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="error"/>
+  <property name="fileExtensions" value="java"/>
+
+  <module name="NewlineAtEndOfFile"/>
+  <module name="FileTabCharacter"/>
+
+  <module name="LineLength">
+    <property name="max" value="140"/>
+  </module>
+
+  <module name="RegexpSingleline">
+    <property name="format" value="\s+$"/>
+    <property name="message" value="Line has trailing whitespace."/>
+  </module>
+
+  <module name="TreeWalker">
+    <module name="OuterTypeFilename"/>
+    <module name="OneTopLevelClass"/>
+    <module name="PackageDeclaration"/>
+
+    <module name="AvoidStarImport"/>
+    <module name="UnusedImports"/>
+    <module name="RedundantImport"/>
+    <!-- java.util.Date and java.util.Calendar are also covered by an ArchUnit
+         rule; Checkstyle catches them before the code even compiles. -->
+    <module name="IllegalImport">
+      <property name="illegalPkgs" value="sun"/>
+      <property name="illegalClasses" value="java.util.Date, java.util.Calendar"/>
+    </module>
+
+    <module name="ModifierOrder"/>
+    <module name="NeedBraces"/>
+    <module name="EqualsHashCode"/>
+    <module name="MissingOverride"/>
+
+    <!-- An empty catch block is never acceptable, and a comment does not
+         make it acceptable either. -->
+    <module name="EmptyCatchBlock">
+      <property name="exceptionVariableName" value="^$"/>
+      <property name="commentFormat" value="^$"/>
+    </module>
+    <module name="IllegalCatch"/>
+
+    <module name="HideUtilityClassConstructor"/>
+    <module name="FinalClass"/>
+    <module name="UpperEll"/>
+    <module name="ArrayTypeStyle"/>
+  </module>
+</module>
