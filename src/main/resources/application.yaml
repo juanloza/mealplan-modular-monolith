@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: mealplan-api
+  datasource:
+    # Defaults point at the throwaway PostgreSQL of compose.yaml.
+    # These are not credentials to anything: in any real deployment they arrive from the environment.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mealplan}
+    username: ${SPRING_DATASOURCE_USERNAME:mealplan}
+    password: ${SPRING_DATASOURCE_PASSWORD:mealplan}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+      # Orders the statements of a flush by primary key, giving every transaction the same
+      # write order. That is what actually prevents deadlocks between concurrent cook operations.
+      hibernate.order_updates: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    default-property-inclusion: always
+    deserialization:
+      # A body carrying an invented ownerId, status or version is rejected instead of being
+      # ignored, which is the usual way a mass assignment slips through unnoticed.
+      fail-on-unknown-properties: true
+    datatype:
+      datetime:
+        # Timestamps go out as ISO-8601 text, never as epoch numbers. In Jackson 3 this feature
+        # lives in DateTimeFeature, not in SerializationFeature, and it has its own property
+        # namespace; setting it under `serialization` stops the application from starting.
+        write-dates-as-timestamps: false
+    serialization:
+      indent-output: false
+  web:
+    resources:
+      add-mappings: false
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  error:
+    whitelabel:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      # This endpoint is public, so it reports the status and nothing else. With details on, an
+      # unauthenticated caller would learn the database URL and which components are failing.
+      show-details: never
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  writer-with-order-by-keys: true
+
+mealplan:
+  security:
+    bcrypt-strength: ${MEALPLAN_BCRYPT_STRENGTH:10}
+    jwt:
+      secret: ${MEALPLAN_JWT_SECRET}
+      ttl-seconds: ${MEALPLAN_JWT_TTL_SECONDS:3600}
+      issuer: ${MEALPLAN_JWT_ISSUER:mealplan-api}

@@ -16,6 +16,13 @@
   <property name="severity" value="error"/>
   <property name="fileExtensions" value="java"/>
 
+  <!-- The path comes from the suppressionsLocation of the Maven plugin, which publishes it as this
+       property. Hardcoding a relative path here would resolve against the working directory and
+       break whenever the build is not launched from the project root. -->
+  <module name="SuppressionFilter">
+    <property name="file" value="${checkstyle.suppressions.file}"/>
+  </module>
+
   <module name="NewlineAtEndOfFile"/>
   <module name="FileTabCharacter"/>
 

@@ -58,9 +58,12 @@
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
+    <!-- The starter, not flyway-core on its own: in Spring Boot 4 the auto-configurations were
+         split into one module per technology, so the library alone leaves the migration silently
+         unapplied. The engine support is still a separate artifact, as it has been since Flyway 10. -->
     <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-flyway</artifactId>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
@@ -120,6 +123,7 @@
         </dependencies>
         <configuration>
           <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+          <suppressionsLocation>config/checkstyle/suppressions.xml</suppressionsLocation>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <consoleOutput>true</consoleOutput>
           <failOnViolation>true</failOnViolation>

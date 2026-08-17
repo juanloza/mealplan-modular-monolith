@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  One suppression, and it is a false positive rather than an exemption.
+
+  HideUtilityClassConstructor treats any class whose only method is static as a utility class and
+  demands a private constructor. The application entry point is not a utility class: it is a Spring
+  configuration class that the container instantiates and proxies, and a private constructor would
+  stop it from being subclassed at startup. Making the code wrong to satisfy the rule would be the
+  worse trade, so the rule is switched off for that single file and nothing else.
+-->
+<suppressions>
+  <suppress files="MealplanApiApplication\.java$" checks="HideUtilityClassConstructor"/>
+</suppressions>
