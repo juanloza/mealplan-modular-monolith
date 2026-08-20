@@ -34,6 +34,12 @@ spring:
     serialization:
       indent-output: false
   web:
+    # Bean Validation resolves its default messages through LocaleContextHolder, so without this the
+    # text of a 400 would follow the Accept-Language header, or the locale of the machine when the
+    # header is absent. The API is English only and its messages are part of the published
+    # contract, so the locale is fixed and the header ignored.
+    locale: en
+    locale-resolver: fixed
     resources:
       add-mappings: false
   lifecycle:
