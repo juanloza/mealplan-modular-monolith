@@ -27,7 +27,7 @@ public final class ProblemDetailFactory {
     static {
         Map<ErrorCode, String> details = new EnumMap<>(ErrorCode.class);
         details.put(ErrorCode.VALIDATION_FAILED, "The request body is not valid.");
-        details.put(ErrorCode.MALFORMED_REQUEST, "The request body could not be read.");
+        details.put(ErrorCode.MALFORMED_REQUEST, "The request could not be read.");
         details.put(ErrorCode.ROUTE_NOT_FOUND, "No handler found for this path.");
         details.put(ErrorCode.METHOD_NOT_ALLOWED, "This method is not supported for this path.");
         details.put(ErrorCode.UNSUPPORTED_MEDIA_TYPE, "Only application/json is supported.");
