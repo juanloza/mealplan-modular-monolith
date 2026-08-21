@@ -4,14 +4,23 @@
     "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <!--
-  One suppression, and it is a false positive rather than an exemption.
+  Two suppressions, and both are false positives rather than exemptions.
 
-  HideUtilityClassConstructor treats any class whose only method is static as a utility class and
-  demands a private constructor. The application entry point is not a utility class: it is a Spring
-  configuration class that the container instantiates and proxies, and a private constructor would
-  stop it from being subclassed at startup. Making the code wrong to satisfy the rule would be the
-  worse trade, so the rule is switched off for that single file and nothing else.
+  HideUtilityClassConstructor treats any class whose only members are static as a utility class and
+  demands a private constructor.
+
+  The application entry point is not a utility class: it is a Spring configuration class that the
+  container instantiates and proxies, and a private constructor would stop it from being subclassed
+  at startup.
+
+  The architecture test is not one either: its members are static because that is how ArchUnit
+  declares rules, and JUnit still owns the lifecycle of the class. A private constructor on a test
+  class would be a lie about who instantiates it.
+
+  Making the code wrong to satisfy the rule would be the worse trade in both cases, so the rule is
+  switched off for those two files and nothing else.
 -->
 <suppressions>
   <suppress files="MealplanApiApplication\.java$" checks="HideUtilityClassConstructor"/>
+  <suppress files="ArchitectureTest\.java$" checks="HideUtilityClassConstructor"/>
 </suppressions>
