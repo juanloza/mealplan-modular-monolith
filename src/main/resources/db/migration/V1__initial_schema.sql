@@ -51,8 +51,15 @@ CREATE TABLE recipe_line (
     ingredient_id uuid    NOT NULL REFERENCES ingredient (id) ON DELETE RESTRICT,
     amount_milli  bigint  NOT NULL,
     CONSTRAINT ck_recipe_line_amount CHECK (amount_milli > 0 AND amount_milli <= 1000000000),
-    CONSTRAINT ux_recipe_line_index      UNIQUE (recipe_id, line_index),
-    CONSTRAINT ux_recipe_line_ingredient UNIQUE (recipe_id, ingredient_id)
+    -- Deferred, and the only two constraints in this schema that are. Replacing the content of a
+    -- recipe deletes every line and inserts the new ones, and Hibernate flushes the inserts before
+    -- the deletes, so the old rows and the new ones coexist in the middle of the transaction: a
+    -- reused line index, or two lines swapping ingredients, would break an immediate constraint
+    -- even though the state at commit is perfectly valid. The uniqueness of the email of an account
+    -- and of an ingredient name are deliberately NOT deferred: their services translate the
+    -- violation into a business error and need it to surface at the flush they control.
+    CONSTRAINT ux_recipe_line_index      UNIQUE (recipe_id, line_index)     DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT ux_recipe_line_ingredient UNIQUE (recipe_id, ingredient_id) DEFERRABLE INITIALLY DEFERRED
 );
 CREATE INDEX ix_recipe_line_ingredient ON recipe_line (ingredient_id);
 
