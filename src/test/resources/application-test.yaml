@@ -1,0 +1,12 @@
+mealplan:
+  security:
+    # Cost 4 is what makes it viable to register dozens of accounts in a suite: at the production
+    # cost of 10 each hash takes around 100 ms. It lives here and in no other configuration.
+    bcrypt-strength: 4
+    jwt:
+      secret: "test-only-secret-test-only-secret"
+      ttl-seconds: 3600
+      issuer: "mealplan-api"
+logging:
+  level:
+    org.hibernate.SQL: warn

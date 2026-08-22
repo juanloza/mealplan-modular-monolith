@@ -86,6 +86,17 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!--
+      Spring Boot 4 split the test autoconfiguration by technology: @AutoConfigureMockMvc is no
+      longer in the test starter, it lives in this module and under a different package,
+      org.springframework.boot.webmvc.test.autoconfigure. Without it the annotation does not
+      resolve, which is the first thing an integration test hits.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-testcontainers</artifactId>
