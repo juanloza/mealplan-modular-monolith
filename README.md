@@ -24,6 +24,8 @@ Deliberately small in scope: the point is to demonstrate module boundaries, stat
 
 **The domain decides; SQL constraints are a safety net, except for uniqueness, where it's the other way round.** Deletion rules, stock non-negativity and state/timestamp coherence are enforced by services, with `CHECK` constraints and `RESTRICT` foreign keys behind them so that a bug becomes an error instead of corrupt data. Uniqueness (user email, ingredient name per owner) is the inverted case: two concurrent requests both pass the pre-check, so the unique index is what actually decides and the service translates the violation. The rule of thumb: if a constraint can fire with correct code, the database is in charge; if it can only fire because of a bug, the domain is.
 
+That rule of thumb also settles which constraints are deferred. Replacing the contents of a recipe deletes every line and inserts the new ones, and Hibernate flushes the inserts *before* the deletes, so old and new rows coexist mid-transaction: reusing a line index, or swapping the ingredients of two lines, breaks an immediate constraint even though the state at commit is perfectly valid. Those two constraints are `DEFERRABLE INITIALLY DEFERRED`; the two that services translate into business errors are deliberately not, because they have to fire at a flush the service controls rather than at commit, where nothing is left to catch them.
+
 ## Stack
 
 - **Java 25** (LTS) and **Spring Boot 4.1**: Spring MVC, Data JPA, Security, Validation, Actuator
@@ -32,7 +34,7 @@ Deliberately small in scope: the point is to demonstrate module boundaries, stat
 - **Testcontainers 2**: integration and concurrency tests run against a real database; they fail without Docker rather than skipping
 - **springdoc-openapi 3**: the generated contract is committed to `docs/openapi.json` and a test fails if it drifts
 - **Checkstyle** for style. No auto-formatter on purpose: `google-java-format` and `palantir-java-format` reach into `javac` internals and break on JDK upgrades, and a lint gate that can break on a JDK bump is worse than none
-- No Lombok, no MapStruct, no Mockito: no annotation processors, no bytecode agents, no generated sources
+- No Lombok and no MapStruct, so no annotation processors and no generated sources. Mockito arrives with the test starter and is not used either: the only test double in the suite is a hand written decorator, which reads better and avoids the bytecode agent that recent JDKs restrict further with every release
 
 ## Project structure
 
@@ -52,13 +54,19 @@ src/main/java/com/example/mealplan/
 ## Getting started
 
 ```bash
-cp .env.example .env
-docker compose up -d db
-export MEALPLAN_JWT_SECRET=dev-only-secret-please-change-me-32
+docker compose up -d db                                        # PostgreSQL 18, no volume, throwaway
+export MEALPLAN_JWT_SECRET=dev-only-secret-please-change-me-32  # the only required variable
 ./mvnw spring-boot:run
 ```
 
-The API listens on `http://localhost:8080`; interactive docs are at `http://localhost:8080/swagger-ui.html`. To run everything in containers instead: `docker compose up --build`.
+The API listens on `http://localhost:8080`; interactive docs are at `http://localhost:8080/swagger-ui.html`.
+
+To run everything in containers instead, copy the example environment file first, which is where the container reads that same secret from:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
 
 Tests:
 
@@ -70,7 +78,16 @@ There is no "fast" profile that skips the integration tests. A project whose poi
 
 ## Status
 
-Design settled, implementation in progress. When it lands, this section will say exactly what has been run and verified, not what is believed to work.
+Complete and working. `./mvnw verify` runs **208 tests**: domain unit tests with no Spring and no database, 18 architecture rules, integration tests against a real PostgreSQL, and the concurrency test.
+
+What that number does not say, and matters more:
+
+- **Each of the 18 architecture rules was proved to work by writing the violation it exists to catch** and watching it turn red. A rule that is never broken on purpose is a rule nobody has tested.
+- **The concurrency test was run ten times in a row with no intermittent failure.** Its assertions cannot pass by accident either: if the two threads serialised, the loser of the first scenario would report that its entry is no longer planned instead of a locking conflict, and the second would leave both meals cooked with the stock spent twice.
+- **Removing the `@Version` from the plan entry turns exactly one of those three scenarios red**, cook-versus-cancel, while the other two keep passing on the pantry version alone. That is the two guards being independent, demonstrated rather than argued.
+- **With Docker stopped the integration tests fail rather than skip**, and the domain unit tests still pass.
+- **The image runs as an unprivileged user and stops in two seconds**, logging the graceful shutdown: the Java process is PID 1 and gets the `SIGTERM` itself.
+- **`docs/openapi.json` cannot drift.** Removing the annotation that marks the two public routes as tokenless fails the snapshot test, and the failure message prints the command that regenerates the file.
 
 The following were left out **on purpose**, and each has a reason:
 
