@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Three jobs with three separate signals: a failure in lint is visible without reading a log of two
+# thousand lines. No job defines an environment variable or uses a secret, so this workflow passes
+# in a fork with nothing configured.
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - run: ./mvnw -B checkstyle:check
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      # The whole suite, concurrency against a real PostgreSQL included: the runners ship Docker,
+      # which is all Testcontainers needs. Checkstyle is skipped because lint already ran it.
+      - run: ./mvnw -B -Dcheckstyle.skip verify
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Builds the image and does not publish it: publishing would need credentials, and this
+      # workflow has to pass in a fork with no secrets.
+      - run: docker build -t mealplan-api:ci .
